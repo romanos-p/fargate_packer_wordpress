@@ -1,0 +1,57 @@
+---
+
+- hosts: all
+  vars:
+    webpath: /var/www/wordpress
+  tasks:
+    - name: Download latest wordpress
+      ansible.builtin.get_url:
+        url: "https://wordpress.org/latest.tar.gz"
+        dest: "/var/www/latest.tar.gz"
+        mode: '0440'
+      register: downloaded_file
+
+    - name: Extract wordpress
+      ansible.builtin.unarchive:
+        src: "{{ downloaded_file.dest }}"
+        dest: /var/www
+
+    - name: Remove downloaded file
+      ansible.builtin.file:
+        path: "{{ downloaded_file.dest }}"
+        state: absent
+
+    - name: Set permissions
+      ansible.builtin.shell: |
+        chown -R root:www-data .
+        find . -type f -exec chmod -c 740 {} \;
+        find . -type d -exec chmod -c 750 {} \;
+      args:
+        chdir: '{{ webpath }}'
+      no_log: true
+
+    - name: Create settings from template
+      ansible.builtin.template:
+        src: wp-config.php.j2
+        dest: "{{ webpath }}/wp-config.php"
+        owner: root
+        group: www-data
+        mode: '0740'
+
+    - name: Copy site Nginx settings
+      ansible.builtin.copy:
+        src: nginx_wp.config
+        dest: /etc/nginx/sites-enabled/default
+        force: yes
+        owner: root
+        group: root
+        mode: '0770'
+
+    - name: Copy startup script
+      ansible.builtin.copy:
+        src: start.sh
+        dest: /var/www/start.sh
+        force: yes
+        owner: root
+        group: root
+        mode: '0770'

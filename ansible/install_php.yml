@@ -1,0 +1,67 @@
+---
+
+- hosts: all
+  tasks:
+    - name: Make required installs
+      ansible.builtin.apt:
+        name: "{{ app }}"
+        state: latest
+        update_cache: yes
+      loop:
+        - lsb-release
+        - apt-transport-https
+        - software-properties-common
+        - ca-certificates
+      loop_control:
+        loop_var: app
+
+    - name: Add ondrej repository for php 8.0
+      apt_repository:
+        repo: 'ppa:ondrej/php'
+
+    - name: Update the repository cache and install latest php
+      ansible.builtin.apt:
+        name: "{{ app }}"
+        state: latest
+      loop:
+        - php8.0-common
+        - php8.0-fpm
+        - php8.0-curl
+        - php8.0-dom
+        - php8.0-exif
+        - php8.0-fileinfo
+        - php8.0-hash
+        - php8.0-cli
+        - php8.0-json
+        - php8.0-mbstring
+        - php8.0-mysqli
+        - php8.0-sodium
+        - php8.0-openssl
+        - php8.0-pcre
+        - php8.0-imagick
+        - php8.0-xml
+        - php8.0-zip
+      loop_control:
+        loop_var: app
+      # ignore errors because some of these are not available :)
+      ignore_errors: yes
+
+    - name: Disable unnecessary option cgi.fix_pathinfo for fpm
+      ansible.builtin.lineinfile:
+        path: /etc/php/8.0/fpm/php.ini
+        state: present
+        regexp: '^;?[\s]*cgi.fix_pathinfo.*$'
+        line: 'cgi.fix_pathinfo=0;'
+
+    - name: Allow enviroment variables to fpm workers
+      ansible.builtin.lineinfile:
+        path: /etc/php/8.0/fpm/pool.d/www.conf
+        state: present
+        regexp: '^;?[\s]*clear_env.*$' 
+        line: 'clear_env=no;'
+
+    - name: Enable the php-fpm service
+      ansible.builtin.service:
+        name: php8.0-fpm
+        enabled: yes
+        state: started
