@@ -87,7 +87,7 @@ resource "aws_ecs_task_definition" "task" {
       ],
       "environment" : [
         {"name": "DB_NAME", "value": "${data.aws_db_instance.rds.db_name}"},
-        {"name": "DB_USER", "value": "${random_string.rds_user.result}"},
+        {"name": "DB_USER", "value": "${var.aws_rds_db_user}"},
         {"name": "DB_PASSWORD", "value": "${random_string.rds_pass.result}"},
         {"name": "DB_HOST", "value": "${data.aws_db_instance.rds.endpoint}"}
       ]
