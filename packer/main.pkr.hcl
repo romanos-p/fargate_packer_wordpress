@@ -1,3 +1,16 @@
+packer {
+  required_plugins {
+    docker = {
+      version = ">= 1.0.9"
+      source  = "github.com/hashicorp/docker"
+    }
+    ansible = {
+      version = ">= 1.1.1"
+      source  = "github.com/hashicorp/ansible"
+    }
+  }
+}
+
 locals {
   timestamp = formatdate("YYYY-MM-DD-hhmmss", timestamp())
 }
@@ -38,7 +51,7 @@ build {
     script = "./scripts/remove_ansible.sh"
   }
 
-  # tag anbd push the image to the repository
+  # tag and push the image to the repository
   post-processors {
     post-processor "docker-tag" {
       repository = "${var.docker_registry_host}/${var.docker_repository}/wp"
